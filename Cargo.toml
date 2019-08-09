@@ -1,0 +1,10 @@
+[package]
+name = "pkeys"
+version = "0.1.0"
+authors = ["Masanori Misono <m.misono760@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+libc = "0.2"
+nix = "0.14"
+bitflags = "1.1.0"
