@@ -1,3 +1,5 @@
+#![feature(asm)]
+
 use bitflags::bitflags;
 use libc::{c_int, c_ulong, c_void, size_t};
 use nix::errno::Errno;
@@ -69,4 +71,38 @@ pub unsafe fn pkey_mprotect(
         pkey,
     ))
     .map(drop)
+}
+
+/// Read protection key rights for user pages
+pub fn rdpkru() -> i32 {
+    #[allow(unused_assignments)]
+    let mut eax: i32 = 0;
+    let ecx: i32 = 0;
+    unsafe {
+        asm!("rdpkru": "={eax}"(eax): "{ecx}"(ecx): "edx": "volatile");
+    }
+    eax
+}
+
+/// Write protection key rights for user pages
+pub fn wrpkru(pkru: i32) {
+    let eax: i32 = pkru;
+    let ecx: i32 = 0;
+    let edx: i32 = 0;
+    unsafe {
+        asm!("wrpkru": : "{eax}"(eax), "{ecx}"(ecx), "{edx}"(edx): : "volatile");
+    }
+}
+
+/// Set access right of given pkey.
+pub fn pkey_set(pkey: RawPkey, access_rights: PkeyAccessRights) {
+    let pkru = access_rights.bits() << (2 * pkey as i32);
+    wrpkru(pkru);
+}
+
+/// Read access right of given pkey.
+pub fn pkey_read(pkey: RawPkey) -> PkeyAccessRights {
+    let pkru = rdpkru();
+    let rights = (pkru >> (2 * pkey as i32)) & 0x3;
+    PkeyAccessRights::from_bits(rights).unwrap()
 }
