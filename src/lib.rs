@@ -96,7 +96,9 @@ pub fn wrpkru(pkru: i32) {
 
 /// Set access right of given pkey.
 pub fn pkey_set(pkey: RawPkey, access_rights: PkeyAccessRights) {
-    let pkru = access_rights.bits() << (2 * pkey as i32);
+    let mut pkru = rdpkru();
+    pkru &= !(0x3 << (2 * pkey as i32));
+    pkru |= access_rights.bits() << (2 * pkey as i32);
     wrpkru(pkru);
 }
 
